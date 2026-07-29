@@ -1567,6 +1567,8 @@ const SUPABASE_FOODS = 'nutriscan_foods';
   <div class="sheet-body">
     <div class="info-box">
       Uses <strong>Mifflin-St Jeor BMR</strong> (most validated formula) + activity multiplier.
+      Add your body fat % below and it switches to the <strong>Katch-McArdle</strong> formula instead,
+      which is more accurate since it accounts for your actual lean mass rather than an average build.
       For body recomposition (build muscle + lose fat) this applies a <strong>slight deficit (~200 kcal)</strong>
       with high protein to preserve muscle.
     </div>
@@ -1581,6 +1583,11 @@ const SUPABASE_FOODS = 'nutriscan_foods';
       <div class="field"><label class="flabel">Weight (kg)</label><input class="finput" id="td-weight" type="number" inputmode="decimal" placeholder="80"></div>
       <div class="field"><label class="flabel">Height (cm)</label><input class="finput" id="td-height" type="number" inputmode="decimal" placeholder="178"></div>
     </div>
+    <div class="row2">
+      <div class="field"><label class="flabel">Current body fat % <span style="font-weight:400;color:var(--on-surf3);">(optional)</span></label><input class="finput" id="td-bf-current" type="number" inputmode="decimal" placeholder="e.g. 20"></div>
+      <div class="field"><label class="flabel">Goal body fat % <span style="font-weight:400;color:var(--on-surf3);">(optional)</span></label><input class="finput" id="td-bf-goal" type="number" inputmode="decimal" placeholder="e.g. 15"></div>
+    </div>
+    <button class="btn-s" style="font-size:12px;padding:9px;margin-bottom:16px;" onclick="openSheet('sh-navybf')">Don't know your body fat %? Estimate it with a tape measure →</button>
     <div class="field">
       <label class="flabel">Activity level</label>
       <select class="finput" id="td-activity">
@@ -1602,6 +1609,47 @@ const SUPABASE_FOODS = 'nutriscan_foods';
     </div>
     <button class="btn-p" onclick="calcTDEE()">Calculate</button>
     <div id="tdee-result-wrap" style="margin-top:16px;"></div>
+  </div>
+</div>
+
+<!-- ══ SHEET: NAVY BODY FAT ESTIMATE ══
+     Fully standalone tool — own fields (nbf- prefix), own function
+     (calcNavyBodyFat), no shared state with the calorie calculator or
+     anything else in the app. Reuses existing .field/.finput/.row2/
+     .btn-p/.info-box/.tdee-result/.tdee-breakdown/.tdee-row styles only,
+     no new CSS. ══ -->
+<div class="scrim" id="sc-navybf" onclick="closeSheet('sh-navybf')"></div>
+<div class="sheet" id="sh-navybf">
+  <div class="sheet-handle"></div>
+  <div class="sheet-hdr">
+    <span class="sheet-title">Body fat estimate</span>
+    <button class="ib" onclick="closeSheet('sh-navybf')"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <div class="info-box">
+      The <strong>US Navy circumference method</strong> (Hodgdon &amp; Beckett, 1984) — just a tape measure, no equipment.
+      Typical accuracy is <strong>±3–4 percentage points</strong> against DEXA/underwater weighing — not exact, but a solid,
+      repeatable second opinion on what your gym machine tells you. Measure at the same time of day (ideally morning,
+      before eating/training) for the most consistent comparisons over time.
+    </div>
+    <div class="field">
+      <label class="flabel">Sex</label>
+      <select class="finput" id="nbf-sex" onchange="toggleNavyHipField()"><option value="m">Male</option><option value="f">Female</option></select>
+    </div>
+    <div class="row2">
+      <div class="field"><label class="flabel">Height (cm)</label><input class="finput" id="nbf-height" type="number" inputmode="decimal" placeholder="178"></div>
+      <div class="field"><label class="flabel">Neck (cm)</label><input class="finput" id="nbf-neck" type="number" inputmode="decimal" placeholder="38"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label class="flabel">Waist (cm)</label><input class="finput" id="nbf-waist" type="number" inputmode="decimal" placeholder="85"></div>
+      <div class="field" id="nbf-hip-field" style="display:none"><label class="flabel">Hip (cm)</label><input class="finput" id="nbf-hip" type="number" inputmode="decimal" placeholder="95"></div>
+    </div>
+    <div class="info-box" style="font-size:11.5px;">
+      <strong>Neck</strong> — just below the Adam's apple. <strong>Waist</strong> — at the navel, standing relaxed (don't suck in). 
+      <strong>Hip</strong> (women only) — around the widest part of the glutes. Keep the tape horizontal and snug but not compressing the skin.
+    </div>
+    <button class="btn-p" onclick="calcNavyBodyFat()">Calculate</button>
+    <div id="navybf-result-wrap" style="margin-top:16px;"></div>
   </div>
 </div>
 
@@ -2644,18 +2692,34 @@ function calcTDEE() {
   var height   = Number(document.getElementById('td-height').value);
   var activity = Number(document.getElementById('td-activity').value);
   var goal     = document.getElementById('td-goal').value;
+  var currentBF = Number(document.getElementById('td-bf-current').value) || 0;
+  var goalBF    = Number(document.getElementById('td-bf-goal').value) || 0;
 
   if (!age || !weight || !height) {
     showToast('Fill in age, weight and height');
     return;
   }
 
-  // Mifflin-St Jeor BMR
-  var bmr;
-  if (sex === 'm') {
-    bmr = 10 * weight + 6.25 * height - 5 * age + 5;
+  // A body fat % outside this range is almost certainly a typo (or the
+  // wrong field) — ignore it rather than let it silently skew the math.
+  var hasCurrentBF = currentBF > 3 && currentBF < 60;
+  var hasGoalBF    = goalBF    > 3 && goalBF    < 60;
+  var lbm = hasCurrentBF ? weight * (1 - currentBF / 100) : null;
+
+  // BMR: Katch-McArdle when body fat % is known — more accurate since it's
+  // based on your actual lean mass instead of assuming an average build
+  // for your height/weight/age. Falls back to Mifflin-St Jeor otherwise.
+  var bmr, bmrFormula;
+  if (hasCurrentBF) {
+    bmr = 370 + 21.6 * lbm;
+    bmrFormula = 'Katch-McArdle';
   } else {
-    bmr = 10 * weight + 6.25 * height - 5 * age - 161;
+    if (sex === 'm') {
+      bmr = 10 * weight + 6.25 * height - 5 * age + 5;
+    } else {
+      bmr = 10 * weight + 6.25 * height - 5 * age - 161;
+    }
+    bmrFormula = 'Mifflin-St Jeor';
   }
 
   var tdee = Math.round(bmr * activity);
@@ -2691,8 +2755,11 @@ function calcTDEE() {
     advice = 'Eating at TDEE maintains your current weight and body composition. ' + activityNote;
   }
 
-  // macro targets — for recomp/cut: protein 2.2g/kg, fat ~25% of calories, rest carbs
-  var protTarget  = Math.round(2.2 * weight);
+  // macro targets — protein at 2.2g/kg of LEAN mass when body fat % is
+  // known (fat mass doesn't need much protein to maintain, so this is
+  // more accurate than the flat per-total-bodyweight fallback below,
+  // especially for anyone carrying more fat mass to lose).
+  var protTarget  = hasCurrentBF ? Math.round(2.2 * lbm) : Math.round(2.2 * weight);
   var fatTarget   = Math.round((targetCal * 0.25) / 9);
   var carbTarget  = Math.round((targetCal - protTarget * 4 - fatTarget * 9) / 4);
   var fiberTarget = Math.round(weight * 0.35); // ~0.35g per kg body weight
@@ -2700,6 +2767,39 @@ function calcTDEE() {
   // BMI
   var bmi    = (weight / ((height/100) * (height/100))).toFixed(1);
   var bmiCat = bmi < 18.5 ? 'Underweight' : bmi < 25 ? 'Normal weight' : bmi < 30 ? 'Overweight' : 'Obese';
+
+  // Goal body fat % → estimated target weight and rough timeline.
+  // Assumes lean mass stays roughly constant (the standard simplifying
+  // assumption for this kind of estimate) and ~7700 kcal per kg of fat.
+  var bfProjectionHtml = '';
+  if (hasCurrentBF && hasGoalBF) {
+    var fatMassNow  = weight * (currentBF / 100);
+    var leanMassNow = weight - fatMassNow;
+    var goalWeight  = leanMassNow / (1 - goalBF / 100);
+    var changeKg    = weight - goalWeight; // positive = fat to lose
+    var direction   = changeKg >= 0 ? 'lose' : 'gain';
+    var absChange   = Math.abs(changeKg);
+    var weeklyDeficitKcal = Math.abs(deficit) * 7;
+    var weeksEstimate = (weeklyDeficitKcal > 0 && absChange > 0.05)
+      ? Math.round((absChange * 7700) / weeklyDeficitKcal)
+      : null;
+
+    bfProjectionHtml =
+      '<div class="fsec" style="margin-top:20px;">Goal body fat projection</div>' +
+      '<div class="tdee-breakdown">' +
+        '<div class="tdee-row"><span>Current</span><strong>~' + (Math.round(fatMassNow*10)/10) + 'kg fat · ' + currentBF + '%</strong></div>' +
+        '<div class="tdee-row"><span>Estimated weight at ' + goalBF + '%</span><strong>~' + (Math.round(goalWeight*10)/10) + 'kg</strong></div>' +
+        '<div class="tdee-row"><span>To ' + direction + '</span><strong>~' + (Math.round(absChange*10)/10) + 'kg</strong></div>' +
+        (weeksEstimate !== null
+          ? '<div class="tdee-row"><span>At this deficit</span><strong>~' + weeksEstimate + ' week' + (weeksEstimate!==1?'s':'') + '</strong></div>'
+          : '') +
+      '</div>' +
+      '<div class="info-box" style="font-size:11.5px;margin-top:10px;">' +
+        'This assumes your lean mass stays roughly constant while you lose fat, and ~7700 kcal per kg of fat — a rough guide, not a schedule. Real progress depends on water weight, training, and adherence, and body fat % itself is usually an estimate (calipers, scans, and smart scales can all disagree by several points).' +
+      '</div>';
+  } else if (hasCurrentBF && goalBF > 0 && !hasGoalBF) {
+    bfProjectionHtml = '<div class="info-box" style="margin-top:16px;">That goal body fat % looks out of range — leave it blank or double-check it to see a projection.</div>';
+  }
 
   // what to track most — priority for recomp
   var trackPriority = goal === 'recomp' || goal === 'cut'
@@ -2715,8 +2815,9 @@ function calcTDEE() {
       '<div class="big">' + targetCal + ' kcal</div>' +
       '<div class="sub">' + description + (deficit !== 0 ? ' (' + (deficit > 0 ? '+' : '') + deficit + ' from TDEE ' + tdee + ')' : '') + '</div>' +
       '<div class="tdee-breakdown">' +
-        '<div class="tdee-row"><span>BMR (base metabolic rate)</span><strong>' + Math.round(bmr) + ' kcal</strong></div>' +
+        '<div class="tdee-row"><span>BMR (' + bmrFormula + ')</span><strong>' + Math.round(bmr) + ' kcal</strong></div>' +
         '<div class="tdee-row"><span>TDEE (with activity)</span><strong>' + tdee + ' kcal</strong></div>' +
+        (hasCurrentBF ? '<div class="tdee-row"><span>Lean body mass</span><strong>' + (Math.round(lbm*10)/10) + 'kg</strong></div>' : '') +
         '<div class="tdee-row"><span>Protein target</span><strong>' + protTarget + 'g (' + (protTarget * 4) + ' kcal)</strong></div>' +
         '<div class="tdee-row"><span>Carb target</span><strong>' + Math.max(carbTarget, 0) + 'g (' + (Math.max(carbTarget,0) * 4) + ' kcal)</strong></div>' +
         '<div class="tdee-row"><span>Fat target</span><strong>' + fatTarget + 'g (' + (fatTarget * 9) + ' kcal)</strong></div>' +
@@ -2724,6 +2825,7 @@ function calcTDEE() {
         '<div class="tdee-row"><span>BMI</span><strong>' + bmi + ' (' + bmiCat + ')</strong></div>' +
       '</div>' +
     '</div>' +
+    bfProjectionHtml +
     '<div class="info-box"><strong>What to track — priority order:</strong><ol style="margin:8px 0 0 16px;">' +
       trackPriority.map(function(t){ return '<li style="margin-bottom:4px;">' + t + '</li>'; }).join('') +
     '</ol></div>' +
@@ -2742,6 +2844,83 @@ function applyTDEEGoals(cal, prot, carbs, fat, fiber) {
   renderToday();
   closeSheet('sh-tdee');
   showToast('Goals updated from calculator');
+}
+
+// ═══════════════════════════════════════════════════════
+// NAVY BODY FAT ESTIMATE — fully standalone, self-contained tool.
+// Does not read, write, or call anything from the calorie calculator,
+// goals, library, or sync — a bug here cannot affect anything else in
+// the app, and nothing else in the app can affect this.
+//
+// US Navy circumference method (Hodgdon & Beckett, 1984), metric:
+//   men:   BF% = 495 / (1.0324  - 0.19077*log10(waist-neck)          + 0.15456*log10(height)) - 450
+//   women: BF% = 495 / (1.29579 - 0.35004*log10(waist+hip-neck)      + 0.22100*log10(height)) - 450
+// ═══════════════════════════════════════════════════════
+function toggleNavyHipField() {
+  var sex = document.getElementById('nbf-sex').value;
+  var hipField = document.getElementById('nbf-hip-field');
+  if (hipField) hipField.style.display = (sex === 'f') ? 'block' : 'none';
+}
+
+function calcNavyBodyFat() {
+  var sex    = document.getElementById('nbf-sex').value;
+  var height = Number(document.getElementById('nbf-height').value);
+  var neck   = Number(document.getElementById('nbf-neck').value);
+  var waist  = Number(document.getElementById('nbf-waist').value);
+  var hip    = Number(document.getElementById('nbf-hip').value);
+
+  if (!height || !neck || !waist) {
+    showToast('Fill in height, neck and waist');
+    return;
+  }
+  if (sex === 'f' && !hip) {
+    showToast('Fill in hip measurement');
+    return;
+  }
+  if (waist <= neck && sex === 'm') {
+    showToast('Waist should be larger than neck — check your measurements');
+    return;
+  }
+  if ((waist + hip) <= neck && sex === 'f') {
+    showToast('Waist + hip should be larger than neck — check your measurements');
+    return;
+  }
+
+  var bf;
+  if (sex === 'm') {
+    bf = 495 / (1.0324 - 0.19077 * Math.log10(waist - neck) + 0.15456 * Math.log10(height)) - 450;
+  } else {
+    bf = 495 / (1.29579 - 0.35004 * Math.log10(waist + hip - neck) + 0.22100 * Math.log10(height)) - 450;
+  }
+
+  if (!isFinite(bf) || isNaN(bf)) {
+    showToast('Could not calculate — check your measurements');
+    return;
+  }
+  bf = Math.max(2, Math.min(60, bf)); // clamp to a physiologically sane range
+
+  var category;
+  if (sex === 'm') {
+    category = bf < 6 ? 'Essential fat' : bf < 14 ? 'Athletic' : bf < 18 ? 'Fitness' : bf < 25 ? 'Average' : 'Above average';
+  } else {
+    category = bf < 14 ? 'Essential fat' : bf < 21 ? 'Athletic' : bf < 25 ? 'Fitness' : bf < 32 ? 'Average' : 'Above average';
+  }
+
+  var wrap = document.getElementById('navybf-result-wrap');
+  wrap.innerHTML =
+    '<div class="tdee-result">' +
+      '<div class="big">' + bf.toFixed(1) + '%</div>' +
+      '<div class="sub">Estimated body fat — ' + category + '</div>' +
+      '<div class="tdee-breakdown">' +
+        '<div class="tdee-row"><span>Method</span><strong>US Navy (tape)</strong></div>' +
+        '<div class="tdee-row"><span>Typical accuracy</span><strong>±3–4 points</strong></div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="info-box" style="margin-top:12px;font-size:11.5px;">' +
+      'This is an estimate, not a diagnosis. Compare it against your gym machine\'s reading taken under similar conditions — ' +
+      'if they land within a few points of each other, that\'s a good sign both are roughly in the right range. Re-measure the ' +
+      'same way each time (same tape tension, same time of day) so any change you see reflects real progress rather than measurement noise.' +
+    '</div>';
 }
 
 // ═══════════════════════════════════════════════════════
