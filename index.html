@@ -55,26 +55,27 @@
   var mBlob = new Blob([JSON.stringify(manifest)], {type:'application/manifest+json'});
   document.getElementById('pwa-manifest').setAttribute('href', URL.createObjectURL(mBlob));
 
-  // ── offline support: REMOVED ────────────────────────────────
-  // A blob: URL service worker was registered here previously. Blob URLs
-  // only live as long as the document that created them — they don't
-  // survive an app restart. iOS aggressively suspends/reloads PWA web
-  // views between sessions, so the browser was left holding a service
-  // worker registration whose script source could no longer resolve
-  // correctly, which is a known cause of corrupted page loads (raw
-  // code/text rendering instead of the app). Rather than risk that,
-  // this actively removes any service worker + cache this page may have
-  // registered in an earlier version, and does not register a new one.
+  // ── offline support ──────────────────────────────────────────
+  // Registered from a real file (./sw.js) — NOT a blob: URL. An earlier
+  // version used a blob: URL, which caused a corrupted-render bug on iOS
+  // PWA: blob URLs only live as long as the document that created them,
+  // and don't survive an app restart, so the browser was left holding a
+  // registration it could no longer resolve correctly. A normal,
+  // network-fetchable script URL is the standard, well-supported
+  // approach (including on iOS home-screen PWAs) and doesn't have that
+  // failure mode. If sw.js isn't present on whatever's hosting this
+  // page, registration just fails quietly and the app works exactly as
+  // it does today — online-only, nothing broken.
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations().then(function(regs) {
-      regs.forEach(function(r) { r.unregister(); });
-    }).catch(function(){});
-  }
-  if (window.caches && caches.keys) {
-    caches.keys().then(function(keys) {
-      keys.forEach(function(k) {
-        if (k.indexOf('nutriscan-shell') === 0) caches.delete(k);
+      regs.forEach(function(r) {
+        // Clean up any leftover registration that isn't this real file —
+        // covers anyone still carrying the old blob-based one.
+        var sw = r.active || r.installing || r.waiting;
+        var scriptURL = sw ? sw.scriptURL : '';
+        if (scriptURL.indexOf('/sw.js') === -1) r.unregister();
       });
+      navigator.serviceWorker.register('./sw.js').catch(function(){});
     }).catch(function(){});
   }
 })();
@@ -5984,6 +5985,16 @@ document.addEventListener('visibilitychange', function() {
   if (!document.hidden) refreshLocalDay();
 });
 window.addEventListener('focus', function() { refreshLocalDay(); });
+
+// Auto-sync (push + pull) the moment the connection comes back — so
+// anything logged offline (and any pending deletions) reaches Supabase
+// without needing to open Settings and tap Sync manually.
+window.addEventListener('online', function() {
+  if (hasSupabaseConfig()) {
+    syncNow().catch(function(){});
+    pullFromCloud().catch(function(){});
+  }
+});
 
 // ─── init ───────────────────────────────────
 // Close library dropdown on outside click
