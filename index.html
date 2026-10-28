@@ -2729,8 +2729,10 @@ function calcTDEE() {
   var currentBF = Number(document.getElementById('td-bf-current').value) || 0;
   var goalBF    = Number(document.getElementById('td-bf-goal').value) || 0;
 
-  if (!age || !weight || !height) {
-    showToast('Fill in age, weight and height');
+  if (!Number.isFinite(age) || age < 1 || age > 120 ||
+      !Number.isFinite(weight) || weight <= 0 ||
+      !Number.isFinite(height) || height <= 0) {
+    showToast('Enter a valid age, weight and height');
     return;
   }
 
@@ -2794,42 +2796,58 @@ function calcTDEE() {
   // more accurate than the flat per-total-bodyweight fallback below,
   // especially for anyone carrying more fat mass to lose).
   var protTarget  = hasCurrentBF ? Math.round(2.2 * lbm) : Math.round(2.2 * weight);
-  var fatTarget   = Math.round((targetCal * 0.25) / 9);
-  var carbTarget  = Math.round((targetCal - protTarget * 4 - fatTarget * 9) / 4);
+  var fatCalories = Math.min(targetCal * 0.25, Math.max(targetCal - protTarget * 4, 0));
+  var fatTarget   = Math.round(fatCalories / 9);
+  var carbTarget  = Math.max(0, Math.round((targetCal - protTarget * 4 - fatTarget * 9) / 4));
   var fiberTarget = Math.round(weight * 0.35); // ~0.35g per kg body weight
 
   // BMI
   var bmi    = (weight / ((height/100) * (height/100))).toFixed(1);
   var bmiCat = bmi < 18.5 ? 'Underweight' : bmi < 25 ? 'Normal weight' : bmi < 30 ? 'Overweight' : 'Obese';
 
-  // Goal body fat % → estimated target weight and rough timeline.
-  // Assumes lean mass stays roughly constant (the standard simplifying
-  // assumption for this kind of estimate) and ~7700 kcal per kg of fat.
+  // Goal body fat % → estimated target weight, calorie intake at that
+  // weight, and a rough timeline when the selected calorie plan supports
+  // the required direction of change. Assumes lean mass stays constant.
   var bfProjectionHtml = '';
   if (hasCurrentBF && hasGoalBF) {
     var fatMassNow  = weight * (currentBF / 100);
     var leanMassNow = weight - fatMassNow;
     var goalWeight  = leanMassNow / (1 - goalBF / 100);
     var changeKg    = weight - goalWeight; // positive = fat to lose
-    var direction   = changeKg >= 0 ? 'lose' : 'gain';
+    var direction   = changeKg > 0.05 ? 'lose' : changeKg < -0.05 ? 'gain' : 'maintain';
     var absChange   = Math.abs(changeKg);
-    var weeklyDeficitKcal = Math.abs(deficit) * 7;
-    var weeksEstimate = (weeklyDeficitKcal > 0 && absChange > 0.05)
-      ? Math.round((absChange * 7700) / weeklyDeficitKcal)
+    // Project energy needs at the estimated goal weight. Mifflin-St Jeor
+    // includes total body weight, so this estimate changes with goalBF;
+    // Katch-McArdle would stay constant here because this projection holds
+    // lean mass constant by definition.
+    var goalBmr = 10 * goalWeight + 6.25 * height - 5 * age + (sex === 'm' ? 5 : -161);
+    var goalTdee = Math.round(goalBmr * activity);
+    var goalTargetCal = Math.max(0, Math.round(goalTdee + deficit));
+    var planSupportsChange = (direction === 'lose' && deficit < 0) || (direction === 'gain' && deficit > 0);
+    var weeksEstimate = (planSupportsChange && absChange > 0.05)
+      ? Math.max(1, Math.round((absChange * 7700) / (Math.abs(deficit) * 7)))
       : null;
+    var timelineNote = direction === 'maintain'
+      ? 'Your goal is within about 0.05 kg of your current estimated weight.'
+      : weeksEstimate !== null
+        ? 'This is a rough estimate based on the selected calorie target and ~7700 kcal per kg of weight change. Real progress varies with water, training, and adherence.'
+        : deficit === 0
+          ? 'The selected plan is maintenance, so it does not create the energy deficit or surplus needed for this weight change.'
+          : 'The selected calorie plan moves opposite to this goal. Choose Fat loss to reduce weight or Muscle gain to increase it for a matching rough timeline.';
 
     bfProjectionHtml =
       '<div class="fsec" style="margin-top:20px;">Goal body fat projection</div>' +
       '<div class="tdee-breakdown">' +
         '<div class="tdee-row"><span>Current</span><strong>~' + (Math.round(fatMassNow*10)/10) + 'kg fat · ' + currentBF + '%</strong></div>' +
         '<div class="tdee-row"><span>Estimated weight at ' + goalBF + '%</span><strong>~' + (Math.round(goalWeight*10)/10) + 'kg</strong></div>' +
-        '<div class="tdee-row"><span>To ' + direction + '</span><strong>~' + (Math.round(absChange*10)/10) + 'kg</strong></div>' +
+        '<div class="tdee-row"><span>Estimated change</span><strong>' + (direction === 'maintain' ? 'Maintain weight' : direction + ' ~' + (Math.round(absChange*10)/10) + 'kg') + '</strong></div>' +
+        '<div class="tdee-row"><span>Target intake at goal weight</span><strong>~' + goalTargetCal + ' kcal/day</strong></div>' +
         (weeksEstimate !== null
-          ? '<div class="tdee-row"><span>At this deficit</span><strong>~' + weeksEstimate + ' week' + (weeksEstimate!==1?'s':'') + '</strong></div>'
+          ? '<div class="tdee-row"><span>At this calorie plan</span><strong>~' + weeksEstimate + ' week' + (weeksEstimate!==1?'s':'') + '</strong></div>'
           : '') +
       '</div>' +
       '<div class="info-box" style="font-size:11.5px;margin-top:10px;">' +
-        'This assumes your lean mass stays roughly constant while you lose fat, and ~7700 kcal per kg of fat — a rough guide, not a schedule. Real progress depends on water weight, training, and adherence, and body fat % itself is usually an estimate (calipers, scans, and smart scales can all disagree by several points).' +
+        'Your goal body fat changes the estimated goal weight and the estimated daily intake at that weight. The calorie target above is for now; intake at goal weight is projected with Mifflin-St Jeor using that weight and the same activity level and deficit or surplus. ' + timelineNote + ' Body fat readings are estimates and methods can differ by several percentage points.' +
       '</div>';
   } else if (hasCurrentBF && goalBF > 0 && !hasGoalBF) {
     bfProjectionHtml = '<div class="info-box" style="margin-top:16px;">That goal body fat % looks out of range — leave it blank or double-check it to see a projection.</div>';
