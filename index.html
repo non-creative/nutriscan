@@ -377,14 +377,6 @@ body{
 }
 .mgoal{font-weight:400;color:var(--on-surf3);}
 
-/* macro accent chips beside bars */
-.mchip{
-  width:34px;height:34px;border-radius:10px;
-  display:flex;align-items:center;justify-content:center;
-  flex-shrink:0;
-}
-.mchip svg{width:18px;height:18px;}
-
 /* ━━━━━━━━━━ MEAL SECTIONS ━━━━━━━━━━ */
 .meal-section{margin-bottom:12px;}
 .meal-hdr{
@@ -629,14 +621,6 @@ body{
 .acc-panel-inner > .btn-d:first-child{margin-top:0;}
 
 
-/* auto-calc hint */
-.calc-hint{
-  font-size:11px;color:var(--primary);font-weight:600;
-  padding:4px 2px 10px;display:none;
-  letter-spacing:.1px;
-}
-.calc-hint.show{display:block;}
-
 /* ━━━━━━━━━━ BUTTONS ━━━━━━━━━━ */
 .btn-p{
   width:100%;background:var(--primary);color:var(--on-primary);
@@ -659,20 +643,6 @@ body{
   font-family:inherit;font-size:14px;font-weight:600;
   cursor:pointer;margin-top:8px;
 }
-
-/* chips */
-.chip{
-  border:none;border-radius:var(--pill);
-  padding:8px 18px;font-size:13px;font-weight:700;
-  font-family:inherit;cursor:pointer;
-  transition:background .12s,box-shadow .12s;
-  white-space:nowrap;letter-spacing:.1px;
-}
-.chip-filled{background:var(--prim-cont);color:var(--primary);}
-.chip-filled:hover{background:#c0d5fc;}
-.chip-filled:active{background:#adc6fb;}
-.chip-out{background:none;border:1.5px solid var(--outline);color:var(--on-surf2);}
-.chip-out:hover{background:var(--surf2);}
 
 /* ━━━━━━━━━━ VIEW TOGGLE ━━━━━━━━━━ */
 .view-toggle{
@@ -846,7 +816,6 @@ body{
 .mp-totals{background:var(--surf2);border-radius:var(--r);padding:12px 14px;margin-bottom:12px;font-size:12.5px;}
 .mp-totals-row{display:flex;justify-content:space-between;padding:3px 0;}
 .mp-totals-row.over{color:var(--error);font-weight:700;}
-.mp-note{font-size:12px;color:var(--on-surf3);font-style:italic;margin-bottom:14px;line-height:1.5;}
 .mp-meal{background:var(--surf2);border-radius:var(--r);padding:14px;margin-bottom:12px;}
 .mp-meal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
 .mp-meal-title{font-size:13px;font-weight:800;color:var(--on-surf);text-transform:uppercase;letter-spacing:.3px;}
@@ -880,9 +849,6 @@ body{
   cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;
 }
 .mp-pick-add:active{background:var(--prim-cont);}
-
-
-
 
 /* OCR/barcode status */
 .viewfinder{
@@ -1112,7 +1078,6 @@ body{
 }
 .lib-btn svg { width:16px; height:16px; }
 .lib-btn:hover { background:var(--surf2); }
-.lib-btn.del:hover { background:var(--err-cont); color:var(--error); }
 .lib-empty { text-align:center; padding:32px 20px; color:var(--on-surf3); font-size:14px; }
 .lib-empty svg { width:40px; height:40px; margin:0 auto 12px; display:block; opacity:.3; }
 
@@ -1446,9 +1411,6 @@ const SUPABASE_FOODS = 'nutriscan_foods';
       <div id="bc-product-wrap"></div>
     </div>
 
-    <!-- ── LABEL OCR mode ── -->
-    
-
     <!-- ── UPLOAD mode ── -->
     <div id="scan-upload-area" style="display:none">
       <div class="upload-zone" id="upload-zone">
@@ -1469,14 +1431,7 @@ const SUPABASE_FOODS = 'nutriscan_foods';
       </div>
     </div>
 
-    <!-- OCR confidence + status (shared by label + upload) -->
-    <div id="ocr-conf-wrap" style="display:none">
-      <div class="ocr-conf">
-        <span style="font-size:11px;color:var(--on-surf2);white-space:nowrap">Confidence</span>
-        <div class="ocr-conf-bar"><div class="ocr-conf-fill" id="ocr-conf-fill" style="width:0%"></div></div>
-        <span class="ocr-conf-label" id="ocr-conf-label">0%</span>
-      </div>
-    </div>
+    <!-- status line for the photo upload -->
     <div id="ocr-status-wrap"></div>
 
     <!-- Editable result fields (shared by label + barcode) -->
@@ -2117,8 +2072,6 @@ function savePlanDay(date, planDay) {
 // ─────────────────────────────────────────────
 //  ADD FOOD
 
-
-
 // ═══════════════════════════════════════════════════════
 //  PORTION SCALING ENGINE
 //  Reference values (per 100g or per serving on label)
@@ -2130,7 +2083,6 @@ var scaleOverride = {}; // prefix → true means user typed cal manually
 
 function scalePortions(prefix) {
   var isAdd  = prefix === 'add';
-  var isScan = prefix === 'scan';
 
   // ── Read reference fields ──────────────────────────────────────────
   var refSize   = parseFloat(document.getElementById(isAdd ? 'add-ref-size'  : 'scan-serving').value)    || 0;
@@ -2189,7 +2141,6 @@ function scalePortions(prefix) {
   var sProt  = sc(protRef);
   var sCarb  = sc(carbRef);
   var sFat   = sc(fatRef);
-  var sFiber = sc(fiberRef);
 
   // ── Update preview panel ───────────────────────────────────────────
   var prevWrap = document.getElementById(isAdd ? 'add-preview' : 'scan-preview');
@@ -2219,10 +2170,6 @@ function scalePortions(prefix) {
     }
   }
 }
-
-
-
-
 
 // ── Helpers to read scaled final values for logging ───────────────
 function getScaledEntry(prefix) {
@@ -2627,68 +2574,12 @@ function submitAdd() {
   closeSheet('sh-add');
 }
 
-// ─────────────────────────────────────────────
-//  AUTO-CALC CALORIES FROM MACROS
-//  Logic:
-//   • If calories field is empty (or was auto-set), and
-//     any of prot/carbs/fat is entered, calculate:
-//     cal = prot×4 + carbs×4 + fat×9
-//   • If serving is also set (and nutrition is per 100g),
-//     scale = serving / 100 → multiply all nutrients
-//   • The calorie field gets the "auto" CSS class + hint shown
-//   • If user manually types calories, auto-calc stops (flag cleared)
-// ─────────────────────────────────────────────
-var autoCalcFlags = { add: true, scan: true }; // true = can auto-set calories
-
-function autoCalc(prefix) {
-  if (!autoCalcFlags[prefix]) return; // user manually entered cal — don't overwrite
-
-  var prot  = parseFloat(document.getElementById(prefix + '-prot').value)  || 0;
-  var carbs = parseFloat(document.getElementById(prefix + '-carbs').value) || 0;
-  var fat   = parseFloat(document.getElementById(prefix + '-fat').value)   || 0;
-
-  if (!prot && !carbs && !fat) {
-    // nothing entered yet — clear and hide hint
-    document.getElementById(prefix + '-cal').value = '';
-    document.getElementById(prefix + '-cal').classList.remove('auto');
-    var hint = document.getElementById(prefix + '-calc-hint');
-    if (hint) hint.classList.remove('show');
-    return;
-  }
-
-  // base cal from Atwater factors: protein 4 kcal/g, carbs 4 kcal/g, fat 9 kcal/g
-  var baseCal = Math.round(prot * 4 + carbs * 4 + fat * 9);
-
-  // if there's a serving weight AND per-100 values, scale proportionally
-  var servingEl = document.getElementById(prefix + '-serving');
-  var serving = servingEl ? parseFloat(servingEl.value) : 0;
-  // only scale if the user seems to have entered per-100g values
-  // (heuristic: serving entered and values look like per-100 — i.e. prot+carbs+fat <= 105)
-  if (serving > 0 && serving !== 100 && (prot + carbs + fat) <= 105) {
-    baseCal = Math.round(baseCal * serving / 100);
-  }
-
-  document.getElementById(prefix + '-cal').value = baseCal;
-  document.getElementById(prefix + '-cal').classList.add('auto');
-  var hint = document.getElementById(prefix + '-calc-hint');
-  if (hint) hint.classList.add('show');
-}
-
-function clearAutoFlag(inputId) {
-  // user is manually typing calories — stop auto-calc for this form
-  var prefix = inputId.split('-')[0]; // 'add' or 'scan'
-  autoCalcFlags[prefix] = false;
-  document.getElementById(inputId).classList.remove('auto');
-  var hint = document.getElementById(prefix + '-calc-hint');
-  if (hint) hint.classList.remove('show');
-}
-
+// Calories typed by the user vs. calories derived from macros: derived values
+// carry the "auto" class (see scalePortions). Call this when a form is reset
+// or refilled so a stale "auto" highlight doesn't linger on the calories field.
 function resetAutoCalc(prefix) {
-  autoCalcFlags[prefix] = true;
   var calEl = document.getElementById(prefix + '-cal');
   if (calEl) calEl.classList.remove('auto');
-  var hint = document.getElementById(prefix + '-calc-hint');
-  if (hint) hint.classList.remove('show');
 }
 
 function logEntry(meal, entry) {
@@ -2729,10 +2620,8 @@ function calcTDEE() {
   var currentBF = Number(document.getElementById('td-bf-current').value) || 0;
   var goalBF    = Number(document.getElementById('td-bf-goal').value) || 0;
 
-  if (!Number.isFinite(age) || age < 1 || age > 120 ||
-      !Number.isFinite(weight) || weight <= 0 ||
-      !Number.isFinite(height) || height <= 0) {
-    showToast('Enter a valid age, weight and height');
+  if (!age || !weight || !height) {
+    showToast('Fill in age, weight and height');
     return;
   }
 
@@ -2796,58 +2685,57 @@ function calcTDEE() {
   // more accurate than the flat per-total-bodyweight fallback below,
   // especially for anyone carrying more fat mass to lose).
   var protTarget  = hasCurrentBF ? Math.round(2.2 * lbm) : Math.round(2.2 * weight);
-  var fatCalories = Math.min(targetCal * 0.25, Math.max(targetCal - protTarget * 4, 0));
-  var fatTarget   = Math.round(fatCalories / 9);
-  var carbTarget  = Math.max(0, Math.round((targetCal - protTarget * 4 - fatTarget * 9) / 4));
+  var fatTarget   = Math.round((targetCal * 0.25) / 9);
+  var carbTarget  = Math.round((targetCal - protTarget * 4 - fatTarget * 9) / 4);
   var fiberTarget = Math.round(weight * 0.35); // ~0.35g per kg body weight
 
   // BMI
   var bmi    = (weight / ((height/100) * (height/100))).toFixed(1);
   var bmiCat = bmi < 18.5 ? 'Underweight' : bmi < 25 ? 'Normal weight' : bmi < 30 ? 'Overweight' : 'Obese';
 
-  // Goal body fat % → estimated target weight, calorie intake at that
-  // weight, and a rough timeline when the selected calorie plan supports
-  // the required direction of change. Assumes lean mass stays constant.
+  // Goal body fat % → estimated target weight and rough timeline.
+  // Assumes lean mass stays roughly constant (the standard simplifying
+  // assumption for this kind of estimate) and ~7700 kcal per kg of fat.
   var bfProjectionHtml = '';
   if (hasCurrentBF && hasGoalBF) {
     var fatMassNow  = weight * (currentBF / 100);
     var leanMassNow = weight - fatMassNow;
     var goalWeight  = leanMassNow / (1 - goalBF / 100);
     var changeKg    = weight - goalWeight; // positive = fat to lose
-    var direction   = changeKg > 0.05 ? 'lose' : changeKg < -0.05 ? 'gain' : 'maintain';
+    var direction   = changeKg >= 0 ? 'lose' : 'gain';
     var absChange   = Math.abs(changeKg);
-    // Project energy needs at the estimated goal weight. Mifflin-St Jeor
-    // includes total body weight, so this estimate changes with goalBF;
-    // Katch-McArdle would stay constant here because this projection holds
-    // lean mass constant by definition.
-    var goalBmr = 10 * goalWeight + 6.25 * height - 5 * age + (sex === 'm' ? 5 : -161);
-    var goalTdee = Math.round(goalBmr * activity);
-    var goalTargetCal = Math.max(0, Math.round(goalTdee + deficit));
-    var planSupportsChange = (direction === 'lose' && deficit < 0) || (direction === 'gain' && deficit > 0);
-    var weeksEstimate = (planSupportsChange && absChange > 0.05)
-      ? Math.max(1, Math.round((absChange * 7700) / (Math.abs(deficit) * 7)))
+    var weeklyDeficitKcal = Math.abs(deficit) * 7;
+    // A timeline only makes sense when the calorie target actually moves you
+    // toward the body-fat goal: a deficit to lose fat, a surplus to gain.
+    var movesTowardGoal = (deficit < 0 && changeKg > 0) || (deficit > 0 && changeKg < 0);
+    var weeksEstimate = (movesTowardGoal && absChange > 0.05)
+      ? Math.round((absChange * 7700) / weeklyDeficitKcal)
       : null;
-    var timelineNote = direction === 'maintain'
-      ? 'Your goal is within about 0.05 kg of your current estimated weight.'
-      : weeksEstimate !== null
-        ? 'This is a rough estimate based on the selected calorie target and ~7700 kcal per kg of weight change. Real progress varies with water, training, and adherence.'
-        : deficit === 0
-          ? 'The selected plan is maintenance, so it does not create the energy deficit or surplus needed for this weight change.'
-          : 'The selected calorie plan moves opposite to this goal. Choose Fat loss to reduce weight or Muscle gain to increase it for a matching rough timeline.';
+    var timelineHtml = '';
+    if (weeksEstimate !== null) {
+      timelineHtml = '<div class="tdee-row"><span>At this ' + (deficit < 0 ? 'deficit' : 'surplus') + '</span><strong>~' +
+        weeksEstimate + ' week' + (weeksEstimate !== 1 ? 's' : '') + '</strong></div>';
+    } else if (absChange > 0.05) {
+      timelineHtml = '<div class="tdee-row"><span>Timeline</span><strong>n/a for this goal</strong></div>';
+    }
 
     bfProjectionHtml =
       '<div class="fsec" style="margin-top:20px;">Goal body fat projection</div>' +
       '<div class="tdee-breakdown">' +
         '<div class="tdee-row"><span>Current</span><strong>~' + (Math.round(fatMassNow*10)/10) + 'kg fat · ' + currentBF + '%</strong></div>' +
         '<div class="tdee-row"><span>Estimated weight at ' + goalBF + '%</span><strong>~' + (Math.round(goalWeight*10)/10) + 'kg</strong></div>' +
-        '<div class="tdee-row"><span>Estimated change</span><strong>' + (direction === 'maintain' ? 'Maintain weight' : direction + ' ~' + (Math.round(absChange*10)/10) + 'kg') + '</strong></div>' +
-        '<div class="tdee-row"><span>Target intake at goal weight</span><strong>~' + goalTargetCal + ' kcal/day</strong></div>' +
-        (weeksEstimate !== null
-          ? '<div class="tdee-row"><span>At this calorie plan</span><strong>~' + weeksEstimate + ' week' + (weeksEstimate!==1?'s':'') + '</strong></div>'
-          : '') +
+        '<div class="tdee-row"><span>To ' + direction + '</span><strong>~' + (Math.round(absChange*10)/10) + 'kg</strong></div>' +
+        timelineHtml +
       '</div>' +
+      ((weeksEstimate === null && absChange > 0.05)
+        ? '<div class="info-box" style="font-size:11.5px;margin-top:10px;">' +
+            (deficit < 0
+              ? 'A ' + goalBF + '% target would mean gaining weight, but this calorie target is a deficit. Pick Muscle gain or Maintain to match it, or lower the goal body fat %.'
+              : 'This calorie target ' + (deficit > 0 ? 'is a surplus' : 'is maintenance') + ', so it won\'t move you toward ' + goalBF + '% body fat. Pick Fat loss or Body recomposition to get a timeline.') +
+          '</div>'
+        : '') +
       '<div class="info-box" style="font-size:11.5px;margin-top:10px;">' +
-        'Your goal body fat changes the estimated goal weight and the estimated daily intake at that weight. The calorie target above is for now; intake at goal weight is projected with Mifflin-St Jeor using that weight and the same activity level and deficit or surplus. ' + timelineNote + ' Body fat readings are estimates and methods can differ by several percentage points.' +
+        'This assumes your lean mass stays roughly constant while you lose fat, and ~7700 kcal per kg of fat — a rough guide, not a schedule. Real progress depends on water weight, training, and adherence, and body fat % itself is usually an estimate (calipers, scans, and smart scales can all disagree by several points).' +
       '</div>';
   } else if (hasCurrentBF && goalBF > 0 && !hasGoalBF) {
     bfProjectionHtml = '<div class="info-box" style="margin-top:16px;">That goal body fat % looks out of range — leave it blank or double-check it to see a projection.</div>';
@@ -2981,7 +2869,6 @@ function calcNavyBodyFat() {
 // ═══════════════════════════════════════════════════════
 
 // ── State ──────────────────────────────────────────────
-var camStream    = null;   // label camera stream (kept alive across opens)
 var bcStream     = null;   // barcode camera stream (released after scan)
 var torchOnBC    = false;
 var capturedB64  = null;
@@ -3016,7 +2903,6 @@ function setScanMode(mode) {
   });
 
   document.getElementById('ocr-status-wrap').innerHTML   = '';
-  document.getElementById('ocr-conf-wrap').style.display = 'none';
   document.getElementById('scan-fields').style.display   = 'none';
 }
 
@@ -3204,42 +3090,6 @@ async function startBarcodeScanner() {
   }
 }
 
-function normalizeBarcode(value) {
-  var code = String(value || '').replace(/[^\d]/g, '');
-  // ZXing may return UPC-A as EAN-13 with a leading zero; OFF accepts both,
-  // but the original UPC is a useful fallback in lookup.
-  return code;
-}
-
-function eanChecksumOk(code) {
-  code = String(code || '');
-  if (!/^\d{8}$|^\d{12}$|^\d{13}$|^\d{14}$/.test(code)) return true;
-  var body = code.slice(0, -1);
-  var check = Number(code.slice(-1));
-  var sum = 0;
-  for (var i = body.length - 1, pos = 0; i >= 0; i--, pos++) {
-    sum += Number(body[i]) * (pos % 2 === 0 ? 3 : 1);
-  }
-  return ((10 - (sum % 10)) % 10) === check;
-}
-
-function isLikelyRetailBarcode(code) {
-  if (!/^\d{8}$|^\d{12}$|^\d{13}$|^\d{14}$/.test(code)) return false;
-  return eanChecksumOk(code);
-}
-
-function barcodeVariants(code) {
-  var out = [code];
-  if (/^0\d{12}$/.test(code)) out.push(code.slice(1));
-  if (/^\d{12}$/.test(code)) out.push('0' + code);
-  return out.filter(function(v, i, arr){ return arr.indexOf(v) === i; });
-}
-
-function cleanBarcodeForStorage(value) {
-  var code = normalizeBarcode(value);
-  return isLikelyRetailBarcode(code) ? code : '';
-}
-
 function lookupManualBarcode() {
   var input = document.getElementById('manual-barcode');
   var code = normalizeBarcode(input ? input.value : '');
@@ -3313,6 +3163,326 @@ async function toggleTorchBC() {
   } catch(e) { torchOnBC = false; }
 }
 
+/* BARCODE-MODULE-START */
+// ══════════════════════════════════════════════════════════════════════
+//  BARCODE → PRODUCT LOOKUP
+//  Order: your library → barcode cache → Open Food Facts (NL + world,
+//  every barcode variant) → OFF search by code, sister databases and
+//  USDA branded foods → UPCitemdb (name only) → manual entry.
+//  Every online hit is checked against the scanned barcode, so a
+//  look-alike product can never be shown for the wrong code.
+// ══════════════════════════════════════════════════════════════════════
+
+// ── Barcode helpers ───────────────────────────────────────────────────
+// Handles EAN-13, EAN-8, UPC-A (12), UPC-E (8, zero-suppressed) and
+// GTIN-14 (outer-carton / multipack codes).
+function normalizeBarcode(value) {
+  return String(value || '').replace(/\D/g, '');
+}
+
+function eanChecksumOk(code) {
+  code = String(code || '');
+  if (!/^\d{8}$|^\d{12}$|^\d{13}$|^\d{14}$/.test(code)) return true;
+  var body = code.slice(0, -1);
+  var check = Number(code.slice(-1));
+  var sum = 0;
+  for (var i = body.length - 1, pos = 0; i >= 0; i--, pos++) {
+    sum += Number(body.charAt(i)) * (pos % 2 === 0 ? 3 : 1);
+  }
+  return ((10 - (sum % 10)) % 10) === check;
+}
+
+// Expand a UPC-E code (number system 0/1) to its 12-digit UPC-A form.
+function upcEToUpcA(code) {
+  if (!/^[01]\d{7}$/.test(code)) return '';
+  var b = code.slice(1, 7), x = b.charAt(5), body;
+  if (x === '0' || x === '1' || x === '2') body = b.slice(0, 2) + x + '0000' + b.slice(2, 5);
+  else if (x === '3') body = b.slice(0, 3) + '00000' + b.slice(3, 5);
+  else if (x === '4') body = b.slice(0, 4) + '00000' + b.charAt(4);
+  else body = b.slice(0, 5) + '0000' + x;
+  return code.charAt(0) + body + code.charAt(7);
+}
+
+// The EAN-13 hiding inside a GTIN-14 (drop the packaging indicator digit).
+function gtin14ToEan13(code) {
+  var body = code.slice(1, 13), sum = 0;
+  for (var i = body.length - 1, pos = 0; i >= 0; i--, pos++) {
+    sum += Number(body.charAt(i)) * (pos % 2 === 0 ? 3 : 1);
+  }
+  return body + ((10 - (sum % 10)) % 10);
+}
+
+function isLikelyRetailBarcode(code) {
+  if (!/^\d{8}$|^\d{12}$|^\d{13}$|^\d{14}$/.test(code)) return false;
+  if (eanChecksumOk(code)) return true;
+  // UPC-E carries the check digit of its expanded UPC-A, so it fails the EAN-8 test.
+  if (code.length === 8) {
+    var a = upcEToUpcA(code);
+    return !!a && eanChecksumOk(a);
+  }
+  return false;
+}
+
+// Other ways the same product may be stored in a database.
+function barcodeVariants(code) {
+  var out = [code];
+  function add(v) { if (v && out.indexOf(v) === -1) out.push(v); }
+  if (code.length === 8 && !eanChecksumOk(code)) { var a = upcEToUpcA(code); add(a); add('0' + a); }
+  if (code.length === 12) add('0' + code);
+  if (code.length === 13 && code.charAt(0) === '0') add(code.slice(1));
+  if (code.length === 14) add(code.charAt(0) === '0' ? code.slice(1) : gtin14ToEan13(code));
+  return out;
+}
+
+function sameBarcode(a, b) {
+  var x = String(a || '').replace(/^0+/, '');
+  return x !== '' && x === String(b || '').replace(/^0+/, '');
+}
+
+// GS1 prefixes 20–29: weighed / price-labelled in-store items (deli,
+// bakery, loose produce). They are not in public databases.
+function isInStoreBarcode(code) {
+  return /^2\d{12}$/.test(code);
+}
+
+function cleanBarcodeForStorage(value) {
+  var code = normalizeBarcode(value);
+  return isLikelyRetailBarcode(code) ? code : '';
+}
+
+// ── Network helpers (also used by the online food search) ─────────────
+function fetchWithTimeout(url, ms) {
+  var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  var tid  = ctrl ? setTimeout(function(){ ctrl.abort(); }, ms) : null;
+  function done() { if (tid) clearTimeout(tid); }
+  return fetch(url, ctrl ? {signal: ctrl.signal} : {}).then(
+    function(res) { done(); return res; },
+    function(err) { done(); throw err; }
+  );
+}
+
+async function safeJson(res) {
+  try { return await res.json(); } catch(e) { return null; }
+}
+
+// GET → parsed JSON, or null. `stats` tells "database said no" (answered)
+// apart from "could not reach it" (failed), so offline is not reported as
+// "product not found".
+async function fetchJson(url, ms, stats) {
+  try {
+    var res = await fetchWithTimeout(url, ms);
+    if (res.status >= 500 || res.status === 429) { stats.failed++; return null; }
+    stats.ok++;
+    return await safeJson(res);
+  } catch(e) {
+    stats.failed++;
+    return null;
+  }
+}
+
+function hasArabicScript(text) {
+  return /[؀-ۿ]/.test(String(text || ''));
+}
+
+// ── Open Food Facts parsing ───────────────────────────────────────────
+var OFF_NAME_FIELDS_EN = ['product_name_en','product_name_nl','generic_name_en','generic_name_nl','product_name','generic_name'];
+// Barcode lookups show the name printed on the shelf label (Dutch first).
+var OFF_NAME_FIELDS_LABEL = ['product_name_nl','product_name','product_name_en','generic_name_nl','generic_name','generic_name_en','abbreviated_product_name'];
+var OFF_PRODUCT_FIELDS = [
+  'code','product_name','product_name_nl','product_name_en',
+  'generic_name','generic_name_nl','generic_name_en','abbreviated_product_name',
+  'brands','brands_tags','stores','stores_tags','nutriments','nutrition_data_per',
+  'serving_size','serving_quantity','serving_quantity_unit'
+].join(',');
+
+function pickOFFName(p, fields) {
+  fields = fields || OFF_NAME_FIELDS_EN;
+  for (var i = 0; i < fields.length; i++) {
+    var n = String(p[fields[i]] || '').trim();
+    if (n && !hasArabicScript(n)) return n;
+  }
+  return '';
+}
+
+function offNutriment(nm, keys) {
+  for (var i = 0; i < keys.length; i++) {
+    var v = nm[keys[i]];
+    if (v !== undefined && v !== null && v !== '' && !isNaN(v)) return Number(v);
+  }
+  return 0;
+}
+
+// Dutch supermarket chains and their house brands, keyed by OFF tag.
+var NL_STORE_GROUPS = {
+  'Albert Heijn': ['albert-heijn','ah','ah-basic','ah-biologisch','ah-excellent','ah-terra'],
+  'Jumbo':        ['jumbo'],
+  'Lidl':         ['lidl','milbona','vitasia','pilos'],
+  'Aldi':         ['aldi','milsani'],
+  'Plus':         ['plus'],
+  'Dirk':         ['dirk'],
+  'Coop':         ['coop'],
+  'Hoogvliet':    ['hoogvliet'],
+  'Vomar':        ['vomar'],
+  'Spar':         ['spar'],
+  'Deen':         ['deen'],
+  'Poiesz':       ['poiesz'],
+  'Ekoplaza':     ['ekoplaza']
+};
+var NL_STORE_BY_TAG = (function() {
+  var map = {};
+  Object.keys(NL_STORE_GROUPS).forEach(function(store) {
+    NL_STORE_GROUPS[store].forEach(function(tag) { map[tag] = store; });
+  });
+  return map;
+})();
+
+function detectNlStore(p) {
+  function asList(v) { return Array.isArray(v) ? v : (typeof v === 'string' ? v.split(',') : []); }
+  var raw = [].concat(asList(p.stores_tags), asList(p.stores), asList(p.brands_tags), asList(p.brands));
+  for (var i = 0; i < raw.length; i++) {
+    var slug = String(raw[i]).toLowerCase().replace(/^[a-z]{2}:/, '').trim()
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    if (NL_STORE_BY_TAG[slug]) return NL_STORE_BY_TAG[slug];
+  }
+  return '';
+}
+
+// Serving size printed on the pack → {qty, unit}. Falls back to 100 g.
+function parseServing(p) {
+  var qty = parseFloat(p.serving_quantity) || 0;
+  var unit = p.serving_quantity_unit === 'ml' ? 'ml' : 'g';
+  if (!qty && p.serving_size) {
+    var m = String(p.serving_size).match(/(\d+(?:[.,]\d+)?)\s*([a-zA-Z]+)?/);
+    if (m) {
+      var n = parseFloat(m[1].replace(',', '.'));
+      var u = (m[2] || 'g').toLowerCase();
+      var factor = {g:1, gr:1, gram:1, grams:1, kg:1000, ml:1, cl:10, dl:100, l:1000}[u];
+      if (n > 0 && factor) {
+        qty = n * factor;
+        unit = (u === 'ml' || u === 'cl' || u === 'dl' || u === 'l') ? 'ml' : 'g';
+      }
+    }
+  }
+  return {qty: qty > 0 ? qty : 100, unit: unit};
+}
+
+// Per-100g/ml REFERENCE values — scalePortions() applies the user's portion
+// later, so nothing is pre-scaled here (that once caused double-scaling).
+function parseOFFProduct(p, label, code) {
+  if (!p) return null;
+  var nm = p.nutriments || {};
+  var per100 = p.nutrition_data_per === '100g';
+  // "_100g" fields are always per 100 g; unprefixed ones are per-serving
+  // when the label is per serving, so only trust them for "per 100g" labels.
+  function n100(keys) {
+    var all = keys.map(function(k){ return k + '_100g'; });
+    return offNutriment(nm, per100 ? all.concat(keys) : all);
+  }
+
+  var cal = offNutriment(nm, ['energy-kcal_100g']);
+  if (!cal && Number(nm['energy_100g']) > 0) cal = Number(nm['energy_100g']) / 4.184;          // kJ → kcal
+  if (!cal && per100) cal = offNutriment(nm, ['energy-kcal']) || (Number(nm['energy']) > 0 ? Number(nm['energy']) / 4.184 : 0);
+  var hasEnergy = (nm['energy-kcal_100g'] != null && nm['energy-kcal_100g'] !== '') ||
+                  (nm['energy_100g'] != null && nm['energy_100g'] !== '');
+
+  var prot  = n100(['proteins', 'protein']);
+  var carbs = n100(['carbohydrates', 'carbohydrate']);
+  var fat   = n100(['fat', 'lipids']);
+  var fiber = n100(['fiber', 'fibers']);
+  var sodiumG = n100(['sodium']);
+  var sodMg = sodiumG > 0 ? sodiumG * 1000 : n100(['salt']) * 400;                              // salt g → sodium mg
+
+  var hasMacros = prot > 0 || carbs > 0 || fat > 0;
+  var noNutrition = !hasEnergy && !hasMacros;
+  var calEstimated = false;
+  if (!noNutrition && !(cal > 0) && hasMacros) {
+    cal = prot * 4 + carbs * 4 + fat * 9;                                                        // Atwater estimate
+    calEstimated = true;
+  }
+
+  var serving = parseServing(p);
+  return {
+    name:         pickOFFName(p, OFF_NAME_FIELDS_LABEL) || ('Product ' + code),
+    brand:        String(p.brands || '').split(',')[0].trim(),
+    store:        detectNlStore(p),
+    source:       label || 'Open Food Facts',
+    barcode:      code,
+    refSize:      100,
+    labelServing: serving.qty,
+    unit:         serving.unit,
+    cal:   rnd(noNutrition ? 0 : cal),
+    prot:  rnd(prot),
+    carbs: rnd(carbs),
+    fat:   rnd(fat),
+    fiber: rnd(fiber),
+    sod:   rnd(sodMg),
+    noNutrition:  noNutrition,
+    calEstimated: calEstimated
+  };
+}
+
+// USDA branded-food record (values are per 100 g / 100 ml).
+function parseUSDABranded(food, code) {
+  var v = {};
+  (food.foodNutrients || []).forEach(function(n) {
+    var name = String(n.nutrientName || '').toLowerCase();
+    var unit = String(n.unitName || '').toUpperCase();
+    var val = Number(n.value);
+    if (!(val >= 0)) return;
+    if (name === 'energy' && unit === 'KCAL') v.cal = val;
+    else if (name === 'energy' && unit === 'KJ') v.kj = val;
+    else if (name === 'protein') v.prot = val;
+    else if (name === 'carbohydrate, by difference') v.carbs = val;
+    else if (name === 'total lipid (fat)') v.fat = val;
+    else if (name === 'fiber, total dietary') v.fiber = val;
+    else if (name === 'sodium, na') v.sod = unit === 'G' ? val * 1000 : val;
+  });
+  if (v.cal === undefined && v.kj > 0) v.cal = v.kj / 4.184;
+  var hasData = v.cal > 0 || v.prot > 0 || v.carbs > 0 || v.fat > 0;
+  var title = String(food.description || '').toLowerCase().replace(/\b\w/g, function(c){ return c.toUpperCase(); });
+  var servingUnit = /ml|mlt/i.test(String(food.servingSizeUnit || '')) ? 'ml' : 'g';
+  var servingQty = Number(food.servingSize) > 0 ? Number(food.servingSize) : 100;
+  return {
+    name:         title || ('Product ' + code),
+    brand:        String(food.brandName || food.brandOwner || '').trim(),
+    store:        '',
+    source:       'USDA FoodData Central',
+    barcode:      code,
+    refSize:      100,
+    labelServing: servingQty,
+    unit:         servingUnit,
+    cal:   rnd(v.cal || 0),
+    prot:  rnd(v.prot || 0),
+    carbs: rnd(v.carbs || 0),
+    fat:   rnd(v.fat || 0),
+    fiber: rnd(v.fiber || 0),
+    sod:   rnd(v.sod || 0),
+    noNutrition: !hasData
+  };
+}
+
+function parseLibraryProduct(food, code) {
+  if (!food) return null;
+  var refSize = parseFloat(food.refsize) || 100;
+  return {
+    name: food.name || ('Product ' + code),
+    brand: '',
+    store: '',
+    source: 'Your library',
+    barcode: code,
+    refSize: refSize,
+    labelServing: refSize,
+    unit: food.unit || 'g',
+    cal: rnd(food.cal || 0),
+    prot: rnd(food.prot || 0),
+    carbs: rnd(food.carbs || 0),
+    fat: rnd(food.fat || 0),
+    fiber: rnd(food.fiber || 0),
+    sod: rnd(food.sodium || 0)
+  };
+}
+
+// ── Local barcode cache (works offline) ───────────────────────────────
 var BARCODE_CACHE_KEY = 'ns3_barcode_cache';
 var BARCODE_CACHE_MAX = 200;
 var BARCODE_CACHE_TTL = 1000 * 60 * 60 * 24 * 90;
@@ -3329,12 +3499,11 @@ function getCachedBarcodeProduct(barcode) {
   if (!code) return null;
   var cache = getBarcodeCache();
   var variants = barcodeVariants(code);
-  for (var i=0; i<variants.length; i++) {
+  for (var i = 0; i < variants.length; i++) {
     var entry = cache[variants[i]];
     if (entry && entry.product && Date.now() - (entry.ts || 0) < BARCODE_CACHE_TTL) {
       var product = Object.assign({}, entry.product);
       product.barcode = code;
-      product._score = Math.max(product._score || 0, 180);
       return product;
     }
   }
@@ -3361,352 +3530,288 @@ function saveBarcodeProductCache(barcode, product) {
       fat: rnd(product.fat || 0),
       fiber: rnd(product.fiber || 0),
       sod: rnd(product.sod || 0),
-      noNutrition: product.noNutrition ? true : false
+      noNutrition: !!product.noNutrition,
+      calEstimated: !!product.calEstimated,
+      nonFood: !!product.nonFood
     }
   };
-
-  var keys = Object.keys(cache).sort(function(a,b){ return (cache[b].ts || 0) - (cache[a].ts || 0); });
-  for (var i=BARCODE_CACHE_MAX; i<keys.length; i++) delete cache[keys[i]];
+  var keys = Object.keys(cache).sort(function(a, b){ return (cache[b].ts || 0) - (cache[a].ts || 0); });
+  for (var i = BARCODE_CACHE_MAX; i < keys.length; i++) delete cache[keys[i]];
   saveBarcodeCache(cache);
 }
 
-// ── Multi-database product lookup ────────────────────────────────────
-// Tries: 1. OFF Netherlands  2. OFF world  3. AH/Lidl-scored OFF search
-// 4. UPC Item DB. Exact barcode wins, but NL supermarket data is preferred.
+// ── Online providers: each resolves to an array of verified products ──
+// ctx = { code, variants, stats }
+
+// Open Food Facts (and its sister projects) — direct product endpoint.
+async function lookupOFFExact(host, variant, label, ctx, nameOnly) {
+  var fields = nameOnly ? 'code,product_name,product_name_nl,product_name_en,brands' : OFF_PRODUCT_FIELDS;
+  var d = await fetchJson('https://' + host + '/api/v2/product/' + encodeURIComponent(variant) +
+    '.json?fields=' + encodeURIComponent(fields), 7000, ctx.stats);
+  if (!d || !d.product) return [];
+  if (d.product.code && !ctx.variants.some(function(v){ return sameBarcode(v, d.product.code); })) return [];
+  // Sister databases are non-food catalogues: keep the name, never any figures.
+  if (nameOnly) d.product.nutriments = {};
+  var item = parseOFFProduct(d.product, label, ctx.code);
+  if (item && nameOnly) item.nonFood = true;
+  return item ? [item] : [];
+}
+
+// Open Food Facts search by code — catches records stored under another
+// code format. Results are only kept when their code matches.
+async function lookupOFFSearch(variant, ctx) {
+  var d = await fetchJson('https://world.openfoodfacts.org/cgi/search.pl?code=' + encodeURIComponent(variant) +
+    '&action=process&json=1&page_size=3&fields=' + encodeURIComponent(OFF_PRODUCT_FIELDS), 6000, ctx.stats);
+  if (!d || !Array.isArray(d.products)) return [];
+  var out = [];
+  d.products.forEach(function(p) {
+    if (p && p.code && ctx.variants.some(function(v){ return sameBarcode(v, p.code); })) {
+      out.push(parseOFFProduct(p, 'Open Food Facts', ctx.code));
+    }
+  });
+  return out;
+}
+
+// USDA FoodData Central — branded foods carry the UPC/GTIN (good for US imports).
+async function lookupUSDABranded(variant, ctx) {
+  var d = await fetchJson('https://api.nal.usda.gov/fdc/v1/foods/search?api_key=DEMO_KEY&dataType=Branded&pageSize=5&query=' +
+    encodeURIComponent(variant), 7000, ctx.stats);
+  if (!d || !Array.isArray(d.foods)) return [];
+  var out = [];
+  d.foods.forEach(function(f) {
+    if (f && ctx.variants.some(function(v){ return sameBarcode(v, f.gtinUpc); })) {
+      out.push(parseUSDABranded(f, ctx.code));
+    }
+  });
+  return out;
+}
+
+// UPCitemdb — general product names (no nutrition).
+async function lookupUPCItemDb(ctx) {
+  var d = await fetchJson('https://api.upcitemdb.com/prod/trial/lookup?upc=' + encodeURIComponent(ctx.code), 5500, ctx.stats);
+  if (!d || d.code !== 'OK' || !Array.isArray(d.items) || !d.items.length) return [];
+  var item = d.items[0];
+  return [{
+    name: String(item.title || '').trim() || ('Product ' + ctx.code),
+    brand: String(item.brand || '').trim(),
+    store: '',
+    source: 'UPCitemdb',
+    barcode: ctx.code,
+    refSize: 100, labelServing: 100, unit: 'g',
+    cal: 0, prot: 0, carbs: 0, fat: 0, fiber: 0, sod: 0,
+    noNutrition: true
+  }];
+}
+
+function scoreBarcodeCandidate(c) {
+  var s = 0;
+  if (c.source === 'Your library') s += 300;
+  if (!c.noNutrition) s += 100;
+  if (c.source === 'Open Food Facts NL') s += 30;
+  else if (c.source === 'Open Food Facts') s += 25;
+  if (c.store) s += 10;
+  if (c.brand) s += 5;
+  return s;
+}
+
+// → { product, offline, unreachable }
+async function resolveBarcode(code, onPhase) {
+  var info = { product: null, offline: false, unreachable: false };
+  var say = onPhase || function() {};
+
+  var lib = parseLibraryProduct(findLibraryFoodByBarcode(code), code);
+  if (lib) { info.product = lib; return info; }
+
+  var cached = getCachedBarcodeProduct(code);
+  // A cached name-only record does not stop us looking again: someone may
+  // have added the nutrition data since.
+  if (cached && !cached.noNutrition) { info.product = cached; return info; }
+
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    info.product = cached;
+    info.offline = !cached;
+    return info;
+  }
+
+  var ctx = { code: code, variants: barcodeVariants(code), stats: { ok: 0, failed: 0 } };
+  var found = cached ? [cached] : [];
+  function collect(lists) { lists.forEach(function(list) { (list || []).forEach(function(c){ if (c) found.push(c); }); }); }
+  function hasNutrition() { return found.some(function(c){ return !c.noNutrition; }); }
+
+  // Stage 1 — Open Food Facts, NL + world, every barcode variant.
+  var jobs = [];
+  ctx.variants.forEach(function(v) {
+    jobs.push(lookupOFFExact('nl.openfoodfacts.org', v, 'Open Food Facts NL', ctx));
+    jobs.push(lookupOFFExact('world.openfoodfacts.org', v, 'Open Food Facts', ctx));
+  });
+  collect(await Promise.all(jobs));
+
+  // Stage 2 — other databases, only when stage 1 gave no nutrition.
+  if (!hasNutrition()) {
+    say('Not in Open Food Facts yet — trying other databases…');
+    var haveOFF = found.some(function(c){ return /^Open Food Facts/.test(c.source); });
+    var jobs2 = [];
+    ctx.variants.slice(0, 2).forEach(function(v) {
+      jobs2.push(lookupUSDABranded(v, ctx));
+      if (!haveOFF) {
+        jobs2.push(lookupOFFSearch(v, ctx));
+      }
+    });
+    if (!haveOFF && !found.length) {
+      var v0 = ctx.variants[0];
+      jobs2.push(lookupOFFExact('world.openproductsfacts.org', v0, 'Open Products Facts', ctx, true));
+      jobs2.push(lookupOFFExact('world.openbeautyfacts.org',   v0, 'Open Beauty Facts',   ctx, true));
+      jobs2.push(lookupOFFExact('world.openpetfoodfacts.org',  v0, 'Open Pet Food Facts', ctx, true));
+    }
+    collect(await Promise.all(jobs2));
+  }
+
+  // Stage 3 — general product-name database.
+  if (!found.length) {
+    say('Checking general product databases…');
+    collect([await lookupUPCItemDb(ctx)]);
+  }
+
+  if (found.length) {
+    found.sort(function(a, b){ return scoreBarcodeCandidate(b) - scoreBarcodeCandidate(a); });
+    info.product = found[0];
+  } else if (ctx.stats.ok === 0 && ctx.stats.failed > 0) {
+    info.unreachable = true;
+  }
+  return info;
+}
+
+// ── UI ────────────────────────────────────────────────────────────────
+var SCAN_FIELD_IDS = ['scan-name','scan-serving','scan-cal','scan-prot','scan-carbs','scan-fat','scan-fiber','scan-sodium','scan-my-serving'];
+
+// Blank every scan-form field so nothing from a previous product leaks in.
+function clearScanFields() {
+  SCAN_FIELD_IDS.forEach(function(id){ setF(id, ''); });
+  var msEl = document.getElementById('scan-my-serving');
+  if (msEl) delete msEl.dataset.touched;
+  setF('scan-portions', '1');
+  setF('scan-unit', 'g');
+  var prev = document.getElementById('scan-preview');
+  if (prev) prev.style.display = 'none';
+  resetAutoCalc('scan');
+}
+
+function bcLoadingHtml(msg) {
+  return '<div class="ocr-st loading"><div class="spin"></div>' + esc(msg) + '</div>';
+}
+
+function renderBarcodeProduct(result, code) {
+  var statusEl = document.getElementById('bc-status-wrap');
+  var sourceLine = [result.store || '', result.source || ''].filter(Boolean).join(' · ');
+  var note = result.noNutrition
+    ? (result.nonFood ? 'Not a food product — check that you scanned the right item'
+                      : 'Name found — fill in the nutrition values from the package label')
+    : (sourceLine || 'Open product data') + ' · values are per 100' + result.unit +
+      (result.calEstimated ? ' · calories estimated from macros' : '');
+
+  statusEl.innerHTML = '<div class="ocr-st ok">✓ ' + esc(result.name) +
+    (result.brand ? ' · <span style="color:var(--on-surf3)">' + esc(result.brand) + '</span>' : '') +
+    '</div><div style="font-size:11px;color:var(--on-surf3);margin-top:4px">' + esc(note) + '</div>';
+
+  document.getElementById('bc-product-wrap').innerHTML =
+    '<div class="product-card">' +
+      '<div class="pc-name">' + esc(result.name) + '</div>' +
+      ((result.brand || sourceLine) ? '<div class="pc-brand">' + esc([result.brand, sourceLine].filter(Boolean).join(' · ')) + '</div>' : '') +
+      (result.noNutrition ? '' :
+        '<div class="pc-macros">' +
+          '<div class="pc-macro" style="color:var(--accent-cal)">'  + result.cal   + ' kcal</div>' +
+          '<div class="pc-macro" style="color:var(--accent-prot)">P ' + result.prot  + 'g</div>' +
+          '<div class="pc-macro" style="color:var(--accent-carb)">C ' + result.carbs + 'g</div>' +
+          '<div class="pc-macro" style="color:var(--accent-fat)">F '  + result.fat   + 'g</div>' +
+          '<div style="font-size:10px;color:var(--on-surf3);margin-top:4px">per 100' + esc(result.unit) + '</div>' +
+        '</div>') +
+    '</div>';
+
+  // Reference values (per 100 g) — scalePortions() handles the portion maths.
+  clearScanFields();
+  setF('scan-name', result.name);
+  setF('scan-serving', result.refSize);
+  if (!result.noNutrition) {
+    setF('scan-cal', result.cal);
+    setF('scan-prot', result.prot);
+    setF('scan-carbs', result.carbs);
+    setF('scan-fat', result.fat);
+    setF('scan-fiber', result.fiber);
+    setF('scan-sodium', result.sod);
+  }
+  // Pre-fill "my serving" with the labelled serving size (e.g. 30 g).
+  setF('scan-my-serving', result.labelServing);
+  setF('scan-unit', result.unit || 'g');
+  scalePortions('scan');
+  document.getElementById('scan-fields').style.display = 'block';
+}
+
+function renderBarcodeMiss(code, info) {
+  var statusEl = document.getElementById('bc-status-wrap');
+  var linkStyle = 'color:var(--primary);font-weight:600';
+  var msg, retry = false, web = true;
+  if (info.offline) {
+    web = false;
+    msg = 'You’re offline, so online product databases can’t be checked. Enter the values from the package — they’ll be saved to your library with this barcode.';
+  } else if (info.unreachable) {
+    retry = true;
+    msg = 'Couldn’t reach the product databases. Check your connection and retry, or enter the values from the package.';
+  } else if (isInStoreBarcode(code)) {
+    msg = 'This is a store-internal code (weighed or price-labelled items such as deli, bakery or loose produce), so it isn’t in any public database. Enter the values manually.';
+  } else {
+    msg = 'Barcode ' + code + ' isn’t in Open Food Facts, USDA or UPCitemdb yet. Enter the values from the package label — they’ll be saved to your library with this barcode, so the next scan finds it instantly.';
+  }
+  statusEl.innerHTML = '<div class="ocr-st err">' + esc(msg) + '</div>' +
+    ((retry || web) ?
+      '<div style="font-size:12px;margin:8px 0 14px;display:flex;gap:16px;flex-wrap:wrap">' +
+        (retry ? '<a href="#" onclick="fetchProduct(\'' + code + '\');return false" style="' + linkStyle + '">Retry</a>' : '') +
+        (web ? '<a href="https://www.google.com/search?q=' + encodeURIComponent(code) + '" target="_blank" rel="noopener" style="' + linkStyle + '">Search the web for this barcode ↗</a>' : '') +
+      '</div>' : '');
+  document.getElementById('bc-product-wrap').innerHTML = '';
+
+  clearScanFields();
+  setF('scan-serving', 100);
+  setF('scan-my-serving', 100);
+  document.getElementById('scan-fields').style.display = 'block';
+}
+
+var _bcLookupSeq = 0;
+
 async function fetchProduct(barcode) {
   var statusEl = document.getElementById('bc-status-wrap');
   if (!statusEl) return;
-  var cleanBarcode = normalizeBarcode(barcode);
-  if (!isLikelyRetailBarcode(cleanBarcode)) {
+  var code = normalizeBarcode(barcode);
+  if (!isLikelyRetailBarcode(code)) {
     statusEl.innerHTML = '<div class="ocr-st err">That scan did not look like a valid retail barcode. Try again with the whole EAN/UPC in frame.</div>';
     return;
   }
-  var manualBarcodeEl = document.getElementById('manual-barcode');
-  if (manualBarcodeEl) manualBarcodeEl.value = cleanBarcode;
-  statusEl.innerHTML = '<div class="ocr-st loading"><div class="spin"></div>Looking up ' + esc(cleanBarcode) + ' in Dutch supermarket data…</div>';
+  var seq = ++_bcLookupSeq;       // a newer scan/lookup supersedes this one
+  setF('manual-barcode', code);
+  document.getElementById('bc-product-wrap').innerHTML = '';
+  statusEl.innerHTML = bcLoadingHtml('Looking up ' + code + '…');
 
-  // ── helper: fetch with timeout ──────────────────────────────────────
-  function fetchWithTimeout(url, ms) {
-    var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
-    var tid  = ctrl ? setTimeout(function(){ ctrl.abort(); }, ms) : null;
-    function cleanup() { if (tid) clearTimeout(tid); }
-    return fetch(url, ctrl ? {signal: ctrl.signal} : {}).then(
-      function(res) { cleanup(); return res; },
-      function(err) { cleanup(); throw err; }
-    );
-  }
-
-  // ── helper: safe JSON parse ─────────────────────────────────────────
-  function safeJsonLocal(res) {
-    return res.json().then(function(d){ return d; }, function(){ return null; });
-  }
-
-  // ── helper: parse OFF product — stores PER-100G reference values ────
-  // IMPORTANT: scan fields hold REFERENCE values (per 100g or per serving
-  // as printed on label). scalePortions() then multiplies by
-  // (my_serving / ref_size) when the user sets their portion.
-  // Do NOT pre-scale here — that caused double-scaling.
-  function parseOFF(p, sourceLabel) {
-    if (!p) return null;
-    var nm = p.nutriments || {};
-
-    // Product name — try EN/NL fields first and avoid Arabic-script fallbacks
-    var nameCandidates = [
-      p.product_name_en, p.product_name_nl,
-      p.generic_name_en, p.generic_name_nl,
-      p.product_name, p.generic_name,
-      p.abbreviated_product_name
-    ];
-    var name = '';
-    for (var ni=0; ni<nameCandidates.length; ni++) {
-      var candidate = String(nameCandidates[ni] || '').trim();
-      if (candidate && !/[\u0600-\u06FF]/.test(candidate)) {
-        name = candidate;
-        break;
-      }
-    }
-    if (!name) name = 'Product ' + cleanBarcode;
-    var brand = (p.brands || '').split(',')[0].trim();
-    var storesText = [p.stores, p.stores_tags, p.brands_tags, p.countries_tags].join(' ').toLowerCase();
-    var preferredStore = '';
-    if (/albert[-_\s]?heijn|\bah\b/.test(storesText) || /albert[-_\s]?heijn|\bah\b/.test((p.brands || '').toLowerCase())) {
-      preferredStore = 'Albert Heijn';
-    } else if (/lidl/.test(storesText) || /lidl/.test((p.brands || '').toLowerCase())) {
-      preferredStore = 'Lidl';
-    }
-
-    // Reference serving size — what the label "per X g" line refers to.
-    // We default to 100g so values are always per-100g.
-    var refSize = 100;
-    var unit    = 'g';
-    if (p.serving_quantity_unit === 'ml') unit = 'ml';
-
-    // Optional: also read the labelled serving size for the "my serving" default
-    var labelServing = parseFloat(p.serving_quantity) || 0;
-    if (!labelServing && p.serving_size) {
-      var sm = String(p.serving_size).match(/(\d[\d.,]*)/);
-      if (sm) labelServing = parseFloat(sm[1].replace(',', '.'));
-    }
-    if (labelServing <= 0) labelServing = 100;
-
-    // Calories per 100g — try every OFF field variant
-    var calPer100 = 0;
-    var calCandidates = [
-      nm['energy-kcal_100g'],
-      nm['energy-kcal'],
-      nm['energy_100g']  ? nm['energy_100g']  / 4.184 : 0,
-      nm['energy']       ? nm['energy']        / 4.184 : 0
-    ];
-    for (var ci = 0; ci < calCandidates.length; ci++) {
-      if (calCandidates[ci] && calCandidates[ci] > 0) {
-        calPer100 = calCandidates[ci];
-        break;
-      }
-    }
-
-    // All macros per 100g
-    function getPer100(keys) {
-      for (var ki = 0; ki < keys.length; ki++) {
-        var v = nm[keys[ki]];
-        if (v !== undefined && v !== null && v !== '' && !isNaN(v)) return Number(v);
-      }
-      return 0;
-    }
-
-    return {
-      name:       name,
-      brand:      brand,
-      store:      preferredStore,
-      source:     sourceLabel || 'Open Food Facts',
-      barcode:    cleanBarcode,
-      refSize:    refSize,        // always 100 — reference is per 100g
-      labelServing: labelServing, // the labelled serving (e.g. 30g) — used as "my serving" default
-      unit:       unit,
-      cal:    rnd(calPer100),
-      prot:   rnd(getPer100(['proteins_100g',   'proteins',   'protein_100g',  'protein'])),
-      carbs:  rnd(getPer100(['carbohydrates_100g','carbohydrates','carbohydrate_100g','carbohydrate'])),
-      fat:    rnd(getPer100(['fat_100g',         'fat',        'lipids_100g',   'lipids'])),
-      fiber:  rnd(getPer100(['fiber_100g',       'fiber',      'fibers_100g',   'fibers', 'fiber_dietary_100g'])),
-      sod:    rnd(getPer100(['sodium_100g',      'sodium'])  * 1000)  // g → mg
-    };
-  }
-
-  function parseLibraryProduct(food) {
-    if (!food) return null;
-    var refSize = parseFloat(food.refsize) || 100;
-    return {
-      name: food.name || ('Product ' + cleanBarcode),
-      brand: '',
-      store: '',
-      source: 'Your library',
-      barcode: cleanBarcode,
-      refSize: refSize,
-      labelServing: refSize,
-      unit: food.unit || 'g',
-      cal: rnd(food.cal || 0),
-      prot: rnd(food.prot || 0),
-      carbs: rnd(food.carbs || 0),
-      fat: rnd(food.fat || 0),
-      fiber: rnd(food.fiber || 0),
-      sod: rnd(food.sodium || 0),
-      _score: 220
-    };
-  }
-
-  var result = null;
-  var candidates = [];
-  var offFields = 'product_name,product_name_en,product_name_nl,generic_name,generic_name_en,generic_name_nl,abbreviated_product_name,brands,brands_tags,stores,stores_tags,countries_tags,nutriments,serving_size,serving_quantity,serving_quantity_unit';
-  var cachedProduct = parseLibraryProduct(findLibraryFoodByBarcode(cleanBarcode));
-  if (cachedProduct) candidates.push(cachedProduct);
-  var barcodeCacheProduct = cachedProduct ? null : getCachedBarcodeProduct(cleanBarcode);
-  if (barcodeCacheProduct) candidates.push(barcodeCacheProduct);
-
-  async function tryOFFProduct(host, code, label, timeout) {
-    try {
-      var r = await fetchWithTimeout(
-        'https://' + host + '/api/v2/product/' + encodeURIComponent(code) +
-        '.json?fields=' + encodeURIComponent(offFields),
-        timeout || 7000
-      );
-      if (r.ok) {
-        var d = await safeJsonLocal(r);
-        if (d && d.status === 1 && d.product) {
-          candidates.push(parseOFF(d.product, label));
-        }
-      }
-    } catch(e) {}
-  }
-
-  async function tryOFFSearch(code, timeout) {
-    try {
-      var r = await fetchWithTimeout(
-        'https://world.openfoodfacts.org/cgi/search.pl?code=' + encodeURIComponent(code) +
-        '&action=process&json=1&fields=' + encodeURIComponent(offFields),
-        timeout || 6000
-      );
-      if (r.ok) {
-        var d = await safeJsonLocal(r);
-        if (d && d.products && d.products.length > 0) {
-          d.products.forEach(function(p){ candidates.push(parseOFF(p, 'Open Food Facts')); });
-        }
-      }
-    } catch(e) {}
-  }
-
-  async function tryPreferredStoreSearch(code) {
-    var terms = ['Albert Heijn ' + code, 'AH ' + code, 'Lidl ' + code];
-    await Promise.all(terms.map(function(term) {
-      return (async function() {
-      try {
-        var r = await fetchWithTimeout(
-          'https://world.openfoodfacts.org/api/v2/search?search_terms=' + encodeURIComponent(term) +
-          '&page_size=4&json=1&fields=' + encodeURIComponent(offFields),
-          4500
-        );
-        if (r.ok) {
-          var d = await safeJsonLocal(r);
-          if (d && Array.isArray(d.products)) {
-            d.products.forEach(function(p){ candidates.push(parseOFF(p, 'Open Food Facts')); });
-          }
-        }
-      } catch(e) {}
-      })();
-    }));
-  }
-
-  if (!cachedProduct && !barcodeCacheProduct) {
-    var variants = barcodeVariants(cleanBarcode);
-    var lookupJobs = [];
-    for (var vi = 0; vi < variants.length; vi++) {
-      lookupJobs.push(tryOFFProduct('nl.openfoodfacts.org', variants[vi], 'Open Food Facts NL', 7500));
-      lookupJobs.push(tryOFFProduct('world.openfoodfacts.org', variants[vi], 'Open Food Facts', 7500));
-      lookupJobs.push(tryOFFSearch(variants[vi], 5500));
-    }
-    await Promise.all(lookupJobs);
-    var hasPreferredStore = candidates.some(function(c){ return c && (c.store === 'Albert Heijn' || c.store === 'Lidl'); });
-    if (!hasPreferredStore) await tryPreferredStoreSearch(cleanBarcode);
-  }
-
-  candidates = candidates.filter(Boolean);
-  if (candidates.length) {
-    candidates.sort(function(a, b) {
-      function score(x) {
-        var s = x._score || 0;
-        if (x.source === 'Your library') s += 200;
-        if (x.store === 'Albert Heijn' || x.store === 'Lidl') s += 80;
-        if (x.source === 'Open Food Facts NL') s += 30;
-        if (x.cal > 0 || x.prot > 0 || x.carbs > 0 || x.fat > 0) s += 20;
-        if (x.brand) s += 5;
-        return s;
-      }
-      return score(b) - score(a);
+  var info;
+  try {
+    info = await resolveBarcode(code, function(msg) {
+      if (seq === _bcLookupSeq) statusEl.innerHTML = bcLoadingHtml(msg);
     });
-    result = candidates[0];
+  } catch(e) {
+    info = { product: null, offline: false, unreachable: true };
   }
+  if (seq !== _bcLookupSeq) return;
 
-  // ── UPC Item DB (name only fallback) ────────────────────────────────
-  if (!result) {
-    try {
-      var r3 = await fetchWithTimeout(
-        'https://api.upcitemdb.com/prod/trial/lookup?upc=' + encodeURIComponent(cleanBarcode),
-        6000
-      );
-      if (r3.ok) {
-        var d3 = await safeJsonLocal(r3);
-        if (d3 && d3.code === 'OK' && d3.items && d3.items.length > 0) {
-          var item = d3.items[0];
-          result = {
-            name: item.title || ('Product ' + cleanBarcode),
-            brand: item.brand || '',
-            store: '',
-            source: 'UPC Item DB',
-            barcode: cleanBarcode,
-            refSize: 100, labelServing: 100, unit: 'g',
-            cal:0, prot:0, carbs:0, fat:0, fiber:0, sod:0,
-            noNutrition: true
-          };
-        }
-      }
-    } catch(e3) { /* all failed */ }
-  }
-
-  // ── Render result ────────────────────────────────────────────────────
-  if (result) {
-    if (result.source !== 'Your library') saveBarcodeProductCache(cleanBarcode, result);
-    var sourceLine = [
-      result.store || '',
-      result.source || ''
-    ].filter(Boolean).join(' · ');
-    var warningHtml = result.noNutrition
-      ? '<div style="font-size:11px;color:var(--on-surf3);margin-top:4px">Name found — fill in nutrition values manually</div>'
-      : '<div style="font-size:11px;color:var(--on-surf3);margin-top:4px">' + esc(sourceLine || 'Open product data') + ' · values are per 100' + esc(result.unit) + '</div>';
-
-    statusEl.innerHTML = '<div class="ocr-st ok">✓ ' + esc(result.name) +
-      (result.brand ? ' · <span style="color:var(--on-surf3)">' + esc(result.brand) + '</span>' : '') +
-      '</div>' + warningHtml;
-
-    document.getElementById('bc-product-wrap').innerHTML =
-      '<div class="product-card">' +
-        '<div class="pc-name">'  + esc(result.name) + '</div>' +
-        ((result.brand || sourceLine) ? '<div class="pc-brand">' + esc([result.brand, sourceLine].filter(Boolean).join(' · ')) + '</div>' : '') +
-        (result.noNutrition ? '' :
-          '<div class="pc-macros">' +
-            '<div class="pc-macro" style="color:var(--accent-cal)">'  + result.cal   + ' kcal</div>' +
-            '<div class="pc-macro" style="color:var(--accent-prot)">P ' + result.prot  + 'g</div>' +
-            '<div class="pc-macro" style="color:var(--accent-carb)">C ' + result.carbs + 'g</div>' +
-            '<div class="pc-macro" style="color:var(--accent-fat)">F '  + result.fat   + 'g</div>' +
-            '<div style="font-size:10px;color:var(--on-surf3);margin-top:4px">per 100' + esc(result.unit) + '</div>' +
-          '</div>'
-        ) +
-      '</div>';
-
-    // Populate reference fields (per 100g) — scalePortions will handle portion math
-    resetAutoCalc('scan');
-    setF('scan-name',    result.name);
-    setF('scan-serving', result.refSize);  // reference = 100g
-    setF('scan-cal',     result.noNutrition ? '' : result.cal);
-    setF('scan-prot',    result.noNutrition ? '' : result.prot);
-    setF('scan-carbs',   result.noNutrition ? '' : result.carbs);
-    setF('scan-fat',     result.noNutrition ? '' : result.fat);
-    setF('scan-fiber',   result.noNutrition ? '' : result.fiber);
-    setF('scan-sodium',  result.noNutrition ? '' : result.sod);
-    // Pre-fill "my serving" with the labelled serving size (e.g. 30g)
-    // so the preview immediately shows calories for one labelled serving
-    setF('scan-my-serving', result.labelServing);
-    document.getElementById('scan-portions').value = '1';
-    document.getElementById('scan-unit').value = result.unit || 'g';
-    scalePortions('scan');
-    document.getElementById('scan-fields').style.display = 'block';
-
+  if (info.product) {
+    if (info.product.source !== 'Your library') saveBarcodeProductCache(code, info.product);
+    renderBarcodeProduct(info.product, code);
   } else {
-    // Nothing found in any database
-    statusEl.innerHTML =
-      '<div class="ocr-st err">' +
-        'Barcode <strong>' + esc(cleanBarcode) + '</strong> was not found in the Dutch/global product databases. ' +
-        'Enter values manually below from the package label.' +
-      '</div>';
-    ['scan-serving','scan-cal','scan-prot','scan-carbs','scan-fat','scan-fiber','scan-sodium','scan-my-serving'].forEach(function(id){ setF(id, ''); });
-    setF('scan-name', 'Product ' + cleanBarcode);
-    setF('scan-serving', 100);
-    setF('scan-my-serving', 100);
-    document.getElementById('scan-fields').style.display = 'block';
+    renderBarcodeMiss(code, info);
   }
 }
+/* BARCODE-MODULE-END */
 
 
 function rnd(v)    { return Math.round((+v||0)*100)/100; }
 function setF(id,v){ var el=document.getElementById(id); if(el) el.value = (v == null ? '' : v); }
-
-
-
- // alias kept for HTML onclick refs
-
-
-
-
-
-
-
 
 // ── Upload ────────────────────────────────────────────────────────────
 var nativeBarcodeDetectorPromise = null;
@@ -3872,20 +3977,16 @@ function handleUpload(e) {
   reader.readAsDataURL(file);
 }
 
-
-
-
-
-
 // Minimal upload handler — shows scan fields for manual entry
 // (Full OCR via Tesseract removed; user fills nutrition manually)
 async function runOCR(source) {
   var imgSrc = source === 'camera' ? null : uploadedB64;
   if (!imgSrc) { showToast('No image uploaded'); return; }
   setOcrStatus('ok', 'Image loaded — fill in the nutrition values below from the label');
+  // Fresh entry: drop values and barcode left over from an earlier scan.
+  clearScanFields();
+  setF('manual-barcode', '');
   document.getElementById('scan-fields').style.display = 'block';
-  var prev = document.getElementById('scan-preview');
-  if (prev) prev.style.display = 'none';
 }
 function setOcrStatus(type, msg) {
   document.getElementById('ocr-status-wrap').innerHTML =
@@ -3895,9 +3996,9 @@ function setOcrStatus(type, msg) {
 // ── Submit / Reset ────────────────────────────────────────────────────
 function submitScan() {
   var name   = document.getElementById('scan-name').value.trim() || 'Scanned item';
-  var scannedBarcode = cleanBarcodeForStorage(
-    (document.getElementById('manual-barcode') || {}).value || lastBarcode
-  );
+  // Only the barcode field counts: it is filled by a scan/lookup and cleared
+  // on reset, so a food entered from a label photo can't inherit an old code.
+  var scannedBarcode = cleanBarcodeForStorage((document.getElementById('manual-barcode') || {}).value);
 
   var refSize   = parseFloat(document.getElementById('scan-serving').value)    || 0;
   var myServing = parseFloat(document.getElementById('scan-my-serving').value) || 0;
@@ -3952,7 +4053,6 @@ function resetScan() {
   capturedB64 = null; uploadedB64 = null;
   stopBarcode();
   document.getElementById('ocr-status-wrap').innerHTML    = '';
-  document.getElementById('ocr-conf-wrap').style.display  = 'none';
   document.getElementById('scan-fields').style.display    = 'none';
   document.getElementById('bc-product-wrap').innerHTML    = '';
   document.getElementById('bc-status-wrap').innerHTML     = '';
@@ -3960,19 +4060,10 @@ function resetScan() {
   document.getElementById('upload-zone').style.display    = 'block';
   var prev = document.getElementById('scan-preview');
   if (prev) prev.style.display = 'none';
-  var msEl = document.getElementById('scan-my-serving');
-  if (msEl) delete msEl.dataset.touched;
-  ['scan-name','scan-serving','scan-cal','scan-prot','scan-carbs','scan-fat','scan-fiber','scan-sodium','scan-my-serving'].forEach(function(id) {
-    var el = document.getElementById(id);
-    if (el) el.value = '';
-  });
-  var spEl = document.getElementById('scan-portions');
-  if (spEl) spEl.value = '1';
-  var suEl = document.getElementById('scan-unit');
-  if (suEl) suEl.value = 'g';
+  clearScanFields();
+  lastBarcode = ''; lastBarcodeTs = 0;
   var mbEl = document.getElementById('manual-barcode');
   if (mbEl) mbEl.value = '';
-  resetAutoCalc('scan');
   var uploadZone = document.getElementById('upload-zone');
   if (uploadZone) { var fi = uploadZone.querySelector('input[type=file]'); if (fi) fi.value = ''; }
   setScanMode('barcode');
@@ -3986,14 +4077,12 @@ function openScanSheet() {
 }
 
 function closeScanSheet() {
-  
   stopBarcode();
   document.getElementById('sh-scan').classList.remove('open');
   document.getElementById('sc-scan').classList.remove('open');
   document.querySelectorAll('.nav-item').forEach(function(b){ b.classList.remove('active'); });
   var nd = document.getElementById('nav-today');
   if (nd) nd.classList.add('active');
-  // Do NOT terminate OCR worker or release camera stream — expensive to reinit
 }
 
 // ─────────────────────────────────────────────
@@ -4555,7 +4644,6 @@ function renderWeekly() {
     col.className = 'bar-col' + (d.isToday ? ' today' : '') + (d.cal > g.cal && d.cal > 0 ? ' bar-over' : '');
 
     var fillPct = d.cal > 0 ? Math.min(d.cal / chartMax * 100, 100) : 0;
-    var bgH     = Math.max(fillPct, d.cal > 0 ? 4 : 2);
 
     col.innerHTML =
       '<div class="bar-bg" style="height:' + CHART_H + 'px;">' +
@@ -4953,26 +5041,11 @@ async function searchFoodOnline(query, mySeq, localHits) {
   if (!resultsEl) return;
   renderLocalResults(resultsEl, localHits, query, null, true); // show loading state
 
-  function fetchWithTimeout(url, ms) {
-    var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
-    var tid  = ctrl ? setTimeout(function(){ ctrl.abort(); }, ms) : null;
-    function cleanup2() { if (tid) clearTimeout(tid); }
-    return fetch(url, ctrl ? {signal: ctrl.signal} : {}).then(
-      function(res) { cleanup2(); return res; },
-      function(err) { cleanup2(); throw err; }
-    );
-  }
-
-  // Helper to safely parse JSON from a response
-  async function safeJson(res) {
-    try { return await res.json(); } catch(e) { return null; }
-  }
-
   var results = [];
   var offFields = [
     'product_name','product_name_en','product_name_nl',
     'generic_name','generic_name_en','generic_name_nl',
-    'brands','stores','stores_tags','countries_tags','languages_tags',
+    'brands','brands_tags','stores','stores_tags','countries_tags','languages_tags',
     'nutriments','serving_quantity','serving_quantity_unit'
   ].join(',');
 
@@ -4987,35 +5060,24 @@ async function searchFoodOnline(query, mySeq, localHits) {
     }).slice(0, 3);
   }
 
-  function hasArabicScript(text) {
-    return /[\u0600-\u06FF]/.test(String(text || ''));
-  }
-  function pickOFFName(p) {
-    var names = [
-      p.product_name_en, p.product_name_nl,
-      p.generic_name_en, p.generic_name_nl,
-      p.product_name, p.generic_name
-    ];
-    for (var i=0; i<names.length; i++) {
-      var n = String(names[i] || '').trim();
-      if (n && !hasArabicScript(n)) return n;
-    }
-    return '';
-  }
-  function offNutriment(nm, keys) {
-    for (var i=0; i<keys.length; i++) {
-      var v = nm[keys[i]];
-      if (v !== undefined && v !== null && v !== '' && !isNaN(v)) return Number(v);
-    }
-    return 0;
-  }
   function parseOFFSearchProduct(p, source) {
     var nm = p.nutriments || {};
     var baseName = pickOFFName(p);
     if (!baseName) return null;
-    var searchable = normalizeSearchText(baseName + ' ' + (p.brands || ''));
     var qNorm = normalizeSearchText(query);
-    if (qNorm && searchable.indexOf(qNorm.split(' ')[0]) === -1 && qNorm.indexOf(searchable) === -1) return null;
+    var qFirst = qNorm.split(' ')[0];
+    // Match the query against the product's English AND Dutch names (so
+    // "kwark" finds a product whose English name is "quark"), and show the
+    // name that actually matched.
+    function nameMatches(name) {
+      var text = normalizeSearchText(name + ' ' + (p.brands || ''));
+      return !qNorm || text.indexOf(qFirst) !== -1 || qNorm.indexOf(text) !== -1;
+    }
+    if (!nameMatches(baseName)) {
+      var labelName = pickOFFName(p, OFF_NAME_FIELDS_LABEL);
+      if (!labelName || !nameMatches(labelName)) return null;
+      baseName = labelName;
+    }
 
     var calPer100 = offNutriment(nm, ['energy-kcal_100g','energy-kcal']);
     if (!calPer100 && nm['energy_100g']) calPer100 = Number(nm['energy_100g']) / 4.184;
@@ -5026,9 +5088,7 @@ async function searchFoodOnline(query, mySeq, localHits) {
 
     var brand = (p.brands || '').split(',')[0].trim();
     var storeText = [p.stores, p.stores_tags, p.brands, p.countries_tags].join(' ').toLowerCase();
-    var store = /albert[-_\s]?heijn|\bah\b/.test(storeText) ? 'Albert Heijn'
-      : /lidl/.test(storeText) ? 'Lidl'
-      : '';
+    var store = detectNlStore(p);
     var unit = p.serving_quantity_unit === 'ml' ? 'ml' : 'g';
     var score = 0;
     if (source.indexOf('NL') !== -1 || /netherlands|nederland|nl/.test(storeText)) score += 30;
@@ -5814,8 +5874,6 @@ function syncLibrary() {
 
 // renderLibrary hook is called directly from openSheet via id check below
 // (no function overwrite needed — avoids timing issues)
-
-
 
 // ═══════════════════════════════════════════════════════
 //  EDIT LOGGED ENTRY
